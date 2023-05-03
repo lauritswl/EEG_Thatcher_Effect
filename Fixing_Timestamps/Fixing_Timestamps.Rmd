@@ -1,0 +1,47 @@
+---
+title: "Fixing Timestamps"
+author: "Laurits Lyngbæk"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r}
+pacman::p_load(tidyverse,janitor)
+```
+
+# Import data
+```{r}
+colume_list <- c('Timestamp','idk','Annotation')
+Faulty_Timestamp <- read_csv(file = "./timestamps.csv",col_names = colume_list)
+```
+
+```{r}
+#Remove rows that are on MS faster than previous row
+Faulty_Timestamp <- Faulty_Timestamp %>% 
+    mutate(lag_time = Timestamp-lag(Timestamp)) %>% 
+    mutate(if_TRUE_remove = ifelse(lead(lag_time)==1,TRUE, FALSE))
+Faulty_Timestamp <- Faulty_Timestamp[Faulty_Timestamp$if_TRUE_remove == FALSE, ]
+
+# Only select three imported rows
+Faulty_Timestamp <- Faulty_Timestamp %>% 
+    select(c(1,2,3)) 
+
+# Sanity Check
+Faulty_Timestamp %>% 
+    count(Annotation)
+
+# Make first row of dataframe collumn names to match formatting of python array
+# CSV_For_Export <- Faulty_Timestamp %>% 
+#     janitor::row_to_names(row_number = 1)
+
+```
+```{r}
+# Save to CSV in Correct Format
+write.table( x = Faulty_Timestamp,
+             sep=",",
+             file = "Cleaned_Timestamps.csv",
+             row.names = FALSE,
+             col.names=FALSE)
+```
+
+
